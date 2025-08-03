@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎉 Crazy Friendship Day Adventure! 🎉</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for better sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One:wght@400&family=Bubblegum+Sans:wght@400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Bubblegum Sans', cursive;
+            overflow: hidden;
+            transition: background 2s ease-in-out;
+            cursor: crosshair;
+        }
+        
+        .main-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .funky-font {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: scale(0.8) rotate(5deg);
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: none;
+        }
+
+        .screen.active {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+            pointer-events: auto;
+        }
+
+        .funky-btn {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            background-size: 300% 300%;
+            animation: gradientShift 3s ease infinite;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transform: scale(1);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .funky-btn:hover {
+            transform: scale(1.1) rotate(-2deg);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .funky-btn:active {
+            transform: scale(0.95) rotate(2deg);
+        }
+
+        .funky-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .funky-btn:hover::before {
+            left: 100%;
+        }
+
+        .message-card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 2rem 3rem;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            border: 3px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            z-index: 10; /* Ensure card is above joke boxes */
+            overflow: hidden;
+        }
+
+        .message-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            z-index: -1;
+            margin: -3px;
+            border-radius: 30px;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            pointer-events: none;
+        }
+        #click-canvas { z-index: 100; }
+
+        #wheel-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7); display: flex; justify-content: center;
+            align-items: center; z-index: 200; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #wheel-modal.visible { opacity: 1; pointer-events: auto; }
+
+        #game-emoji {
+            position: absolute; font-size: 4rem; cursor: pointer; user-select: none;
+            transition: transform 0.2s ease; z-index: 50; display: none;
+        }
+        #game-emoji:hover { transform: scale(1.2); }
+        
+        .joke-box {
+            position: absolute;
+            background: white;
+            padding: 1rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: rotate(-7deg);
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), box-shadow 0.3s ease;
+            width: 200px;
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: bold;
+            z-index: 5;
+        }
+        .joke-box:hover {
+            transform: rotate(0deg) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
+        .joke-box.revealed {
+            transform: rotate(2deg) scale(1.05);
+            font-weight: normal;
+            font-style: italic;
+            cursor: default;
+        }
+
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-20px); } 60% { transform: translateY(-10px); } }
+        .bounce-animation { animation: bounce 2s infinite; }
+
+        .bg-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .bg-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .bg-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .bg-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .bg-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .bg-final { background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); }
+
+        /* Media query to adjust for smaller screens */
+        @media (max-width: 820px) {
+            .message-card {
+                padding: 2rem 1.5rem;
+            }
+            .joke-box {
+                width: 140px;
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-1">
+    <div class="main-container">
+        <canvas id="click-canvas"></canvas>
+
+        <!-- Screen 1: Welcome -->
+        <div class="screen active" id="screen1">
+            <canvas id="confetti-canvas"></canvas>
+            <div class="message-card">
+                <h1 class="funky-font text-5xl md:text-6xl text-purple-600 mb-6 bounce-animation">🎉 FRIENDSHIP DAY! 🎉</h1>
+                <input id="name-input" type="text" placeholder="Type your name!" class="w-full max-w-xs mx-auto mb-6 px-4 py-3 rounded-full text-center text-xl text-gray-800 focus:outline-none focus:ring-4 focus:ring-yellow-400">
+                <button class="funky-btn next-btn" data-target="2">Let's Start! 🚀</button>
+            </div>
+        </div>
+
+        <!-- Screen 2: Message -->
+        <div class="screen" id="screen2">
+            <div class="joke-box" style="top: 10vh; left: 5vw;"></div>
+            <div class="joke-box" style="bottom: 10vh; right: 5vw; transform: rotate(4deg)"></div>
+            <div class="message-card">
+                <h2 class="funky-font text-4xl md:text-5xl text-pink-600 mb-6">You're AMAZING! ✨</h2>
+                <p class="text-xl text-gray-700 mb-4">Seriously, how did I get so lucky to have a friend like you?</p>
+                <div class="flex gap-4 justify-center mt-4"><button class="funky-btn back-btn" data-target="1">⬅️</button><button class="funky-btn next-btn" data-target="3">➡️</button></div>
+            </div>
+        </div>
+
+        <!-- Screen 3: Spin the Wheel Game -->
+        <div class="screen" id="screen3">
+            <div class="joke-box" style="top: 15vh; right: 5vw;"></div>
+            <div class="joke-box" style="bottom: 15vh; left: 5vw; transform: rotate(5deg)"></div>
+            <div class="message-card">
+                <h2 class="funky-font text-4xl md:text-5xl text-blue-600 mb-6">Friendship Challenge!</h2>
+                <button id="spin-wheel-button" class="funky-btn animate-pulse">Spin for a Dare!</button>
+                <div class="flex gap-4 justify-center mt-8"><button class="funky-btn back-btn" data-target="2">⬅️</button><button class="funky-btn next-btn" data-target="4">➡️</button></div>
+            </div>
+        </div>
+
+        <!-- Screen 4: Catch the Emoji Game -->
+        <div class="screen" id="screen4">
+            <div class="joke-box" style="top: 10vh; left: 8vw;"></div>
+            <div class="joke-box" style="bottom: 10vh; right: 8vw; transform: rotate(-3deg)"></div>
+            <div class="message-card">
+                <h2 class="funky-font text-4xl md:text-5xl text-green-600 mb-6">Catch the Emoji!</h2>
+                <p class="text-xl text-gray-700 mb-4">This one's as wild as our friendship. Try to click it!</p>
+                <div id="game-emoji">🤪</div>
+                <div class="flex gap-4 justify-center mt-8"><button class="funky-btn back-btn" data-target="3">⬅️</button><button class="funky-btn next-btn" data-target="5">➡️</button></div>
+            </div>
+        </div>
+
+        <!-- Screen 5: Final Message -->
+        <div class="screen" id="screen5">
+            <div class="joke-box" style="top: 15vh; right: 8vw;"></div>
+            <div class="joke-box" style="bottom: 15vh; left: 8vw; transform: rotate(6deg)"></div>
+            <div class="message-card">
+                <h2 class="funky-font text-4xl md:text-5xl text-yellow-600 mb-6">Thank You! 🙏</h2>
+                <p class="text-xl text-gray-700 mb-4">For being real, for being crazy, for being the most awesome friend anyone could ask for!</p>
+                <div class="flex gap-4 justify-center mt-4"><button class="funky-btn back-btn" data-target="4">⬅️</button><button class="funky-btn" id="final-btn">The Grand Finale! 🎁</button></div>
+            </div>
+        </div>
+
+        <!-- Final Screen -->
+        <div class="screen" id="finalScreen">
+            <canvas id="fireworks-canvas"></canvas>
+            <div class="message-card bg-transparent border-none shadow-none">
+                <h1 id="final-message" class="funky-font text-5xl md:text-6xl text-yellow-400 mb-6">HAPPY FRIENDSHIP DAY!</h1>
+                <p class="text-2xl text-white mb-8">You're not just a friend - you're the College FAMILY! 🥳</p>
+                <div class="flex gap-4 justify-center flex-wrap">
+                    <button id="replay-btn" class="funky-btn">🔄 Replay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Spin the Wheel -->
+    <div id="wheel-modal">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm mx-4 transform transition-transform duration-300 scale-95">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Your Dare Is...</h3>
+            <p id="dare-text" class="text-xl text-gray-600 mb-6">...</p>
+            <button id="close-modal-button" class="funky-btn bg-red-500">Got it!</button>
+        </div>
+    </div>
+
+    <script>
+        // --- State and Elements ---
+        let currentScreenIndex = 1;
+        const totalScreens = 5;
+        let userName = "";
+        let isTransitioning = false;
+        let audioInitialized = false;
+
+        // --- Content Arrays ---
+        const hinglishJokes = [
+            "Group study ka matlab: ek padh raha hai, dusra kha raha hai, teesra bas memes dikha raha hai! 😂",
+            "Day 1: Kal se padhunga. Day 2: Kal se padhunga. Day 3: Arey bhai paper kal hai??? 🤯",
+            "Tumhari ‘all-nighter’ ka matlab – memes dekhte dekhte subah kar dena! 🤣",
+            "Are jaldi aao na yaar… TC pe aa jao!",
+            "Bhai bunk kare kya? Teacher ka mood dekh ke lag raha hai – aaj padhai nahi hone wali!",
+            "Pani puri wale bhaiya se ek sukhi papdi extra leke aana yrr...",
+            "Khane mein kya laya? Kuch khila de yrr..",
+            "Bhai ye kya ho gaya? Studio mein chalte hain.",
+            "Ye isko teacher kisne banaya? 🤨",
+        ];
+        const dares = [
+           "Ek random dost ko call karke sirf yeh puchho – 'Khaane me kya laya?' 🍕",
+           "Group me message bhej – 'Kal se padhai shuru… pakka wala!' 🤣",
+           "Apne dost ka naam 5 baar alag alag accent me bolke voice note bhejo! 🎙️",
+           "Ek random dost ko message karo – 'Bhai tumhare bina college boring hai!' 😜",
+           "Ek dost ko DM karke sirf ek hi emoji bhejo – 🐒",
+           "Group me message bhejo – 'Aaj sabko naye naam do… sabse funny naam!' 🤭",
+           "Group me message bhejo – 'Apne dost ka naam + ek fruit ka naam likhkar bhejo!' 🍎😂",
+           "Group me message bhejo – 'Sabke liye ek filmy dialogue assign karo!' 🎬",
+           "Group me message bhejo – 'Sabko ek emoji assign karo jo unke liye perfect ho!' 🤣",
+           "Group me message bhejo – 'Sabke liye ek nickname likho jo sabko hassa de!' 🤣"
+        ];
+
+        // --- Sound Engine (Tone.js) ---
+        const synths = {
+            pop: new Tone.Synth({ oscillator: { type: "fatsawtooth" }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+            sparkle: new Tone.PluckSynth({ attackNoise: 1, dampening: 4000, resonance: 0.7 }).toDestination(),
+            whoosh: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).toDestination()
+        };
+        function playSound(type = 'pop', note = 'C4') {
+            if (!audioInitialized) return;
+            if (synths[type]) {
+                if (type === 'whoosh') synths[type].triggerAttackRelease("8n");
+                else synths[type].triggerAttackRelease(note, "8n");
+            }
+        }
+        function initializeAudio() {
+            if (audioInitialized) return;
+            Tone.start();
+            audioInitialized = true;
+        }
+        document.body.addEventListener('click', initializeAudio, { once: true });
+        document.body.addEventListener('touchstart', initializeAudio, { once: true });
+
+
+        // --- Navigation ---
+        function showScreen(targetIndex) {
+            if (isTransitioning || targetIndex < 1 || targetIndex > totalScreens + 1) return;
+            isTransitioning = true;
+            
+            const currentScreen = document.querySelector('.screen.active');
+            const targetScreen = document.getElementById(targetIndex > totalScreens ? 'finalScreen' : `screen${targetIndex}`);
+            
+            if (currentScreenIndex === 1 && targetIndex > 1) {
+                userName = document.getElementById('name-input').value.trim() || "Friend";
+            }
+
+            if (currentScreen) currentScreen.classList.remove('active');
+            if (targetScreen) {
+                targetScreen.classList.add('active');
+                setupJokeBoxes(targetScreen);
+            }
+            
+            document.body.className = targetScreen.id === 'finalScreen' ? 'bg-final' : `bg-${targetIndex}`;
+            
+            if (targetIndex === 1) startConfetti(); else stopConfetti();
+            if (targetIndex === 4) startGameEmoji(); else stopGameEmoji();
+            if (targetScreen.id === 'finalScreen') {
+                startFireworks();
+                document.getElementById('final-message').textContent = `HAPPY FRIENDSHIP DAY, ${userName}!`;
+            } else {
+                stopFireworks();
+            }
+
+            currentScreenIndex = targetIndex;
+            setTimeout(() => { isTransitioning = false; }, 800);
+        }
+
+        document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', () => { playSound('pop', 'C4'); showScreen(currentScreenIndex + 1); }));
+        document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => { playSound('pop', 'A3'); showScreen(currentScreenIndex - 1); }));
+        document.getElementById('final-btn').addEventListener('click', () => { playSound('sparkle', 'C5'); showScreen(totalScreens + 1); });
+        document.getElementById('replay-btn').addEventListener('click', () => {
+            playSound('whoosh');
+            document.getElementById('name-input').value = "";
+            showScreen(1);
+        });
+
+        // --- Games & Interactive Elements ---
+        function setupJokeBoxes(screen) {
+            const jokeBoxes = screen.querySelectorAll('.joke-box');
+            if (!jokeBoxes.length) return;
+            const shuffledJokes = [...hinglishJokes].sort(() => 0.5 - Math.random());
+            jokeBoxes.forEach((box, index) => {
+                box.dataset.joke = shuffledJokes[index % shuffledJokes.length];
+                box.innerHTML = "Click here for some regular dialogues 🤫";
+                box.classList.remove('revealed');
+                box.dataset.revealed = 'false';
+            });
+        }
+
+        const wheelModal = document.getElementById('wheel-modal');
+        document.getElementById('spin-wheel-button').addEventListener('click', () => {
+            playSound('sparkle', 'G4');
+            document.getElementById('dare-text').textContent = dares[Math.floor(Math.random() * dares.length)];
+            wheelModal.classList.add('visible');
+        });
+        document.getElementById('close-modal-button').addEventListener('click', () => {
+            playSound('pop', 'F3');
+            wheelModal.classList.remove('visible');
+        });
+
+        const gameEmoji = document.getElementById('game-emoji');
+        let gameEmojiInterval;
+        function startGameEmoji() {
+            gameEmoji.style.display = 'block';
+            gameEmojiInterval = setInterval(() => {
+                gameEmoji.style.top = `${Math.random() * 70 + 15}%`;
+                gameEmoji.style.left = `${Math.random() * 70 + 15}%`;
+            }, 800);
+        }
+        function stopGameEmoji() {
+            gameEmoji.style.display = 'none';
+            clearInterval(gameEmojiInterval);
+        }
+        gameEmoji.addEventListener('click', (e) => {
+            playSound('sparkle', 'C6');
+            createParticleExplosion(e.clientX, e.clientY, ['#FFD700', '#FF69B4', '#00FFFF']);
+            stopGameEmoji();
+            setTimeout(startGameEmoji, 1500);
+        });
+        
+        // --- Animations ---
+        const clickCanvas = document.getElementById('click-canvas');
+        const clickCtx = clickCanvas.getContext('2d');
+        let clickParticles = [];
+        let confettiAnimationId, fireworksAnimationId;
+
+        function createParticleExplosion(x, y, colors) {
+            for (let i = 0; i < 30; i++) {
+                clickParticles.push({ x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8, alpha: 1, color: colors[Math.floor(Math.random() * colors.length)] });
+            }
+        }
+        document.body.addEventListener('click', (e) => {
+            if (e.target.classList.contains('joke-box') && e.target.dataset.revealed === 'false') {
+                playSound('sparkle', 'E5');
+                e.target.innerHTML = `"${e.target.dataset.joke}"`;
+                e.target.classList.add('revealed');
+                e.target.dataset.revealed = 'true';
+            } else if (!e.target.closest('.funky-btn, .message-card, #wheel-modal')) {
+                playSound('pop', 'G5');
+                createParticleExplosion(e.clientX, e.clientY, ['#FFFFFF', '#FFD700', '#00FFFF']);
+            }
+        });
+        function animateClickParticles() {
+            clickCtx.clearRect(0, 0, clickCanvas.width, clickCanvas.height);
+            for (let i = clickParticles.length - 1; i >= 0; i--) {
+                let p = clickParticles[i];
+                p.x += p.vx; p.y += p.vy; p.alpha -= 0.05;
+                if (p.alpha <= 0) clickParticles.splice(i, 1);
+                else { clickCtx.globalAlpha = p.alpha; clickCtx.fillStyle = p.color; clickCtx.fillRect(p.x, p.y, 3, 3); }
+            }
+            requestAnimationFrame(animateClickParticles);
+        }
+        
+        function startConfetti() {
+            stopConfetti();
+            const canvas = document.getElementById('confetti-canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let confettiPieces = [];
+            const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3'];
+            for (let i = 0; i < 150; i++) confettiPieces.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height, size: Math.random() * 10 + 5, color: colors[Math.floor(Math.random() * colors.length)], speed: Math.random() * 5 + 2, angle: Math.random() * 360, tilt: Math.random() * 10 - 5 });
+            function update() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                confettiPieces.forEach((p) => {
+                    p.y += p.speed; p.angle += p.tilt / 2;
+                    if (p.y > canvas.height) { p.x = Math.random() * canvas.width; p.y = -20; }
+                    ctx.save(); ctx.fillStyle = p.color; ctx.translate(p.x, p.y); ctx.rotate(p.angle * Math.PI / 180); ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size); ctx.restore();
+                });
+                confettiAnimationId = requestAnimationFrame(update);
+            }
+            update();
+        }
+        function stopConfetti() { cancelAnimationFrame(confettiAnimationId); }
+
+        function startFireworks() {
+            stopFireworks();
+            const canvas = document.getElementById('fireworks-canvas');
+            if(!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let fireworks = [], particles = [];
+            const colors = ['#ffc700', '#ff5722', '#f44336', '#e91e63', '#9c27b0', '#03a9f4'];
+            function update() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                if (Math.random() < 0.05) fireworks.push({ x: Math.random() * canvas.width, y: canvas.height, targetX: Math.random() * canvas.width, targetY: Math.random() * (canvas.height / 2), color: colors[Math.floor(Math.random() * colors.length)] });
+                for (let i = fireworks.length - 1; i >= 0; i--) {
+                    let f = fireworks[i], dx = f.targetX - f.x, dy = f.targetY - f.y, dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 10) {
+                        for (let j = 0; j < 100; j++) particles.push({ x: f.x, y: f.y, color: f.color, angle: Math.random() * Math.PI * 2, speed: Math.random() * 8 + 2, friction: 0.95, gravity: 1, alpha: 1, decay: Math.random() * 0.03 + 0.01 });
+                        fireworks.splice(i, 1);
+                    } else { f.x += dx / 20; f.y += dy / 20; }
+                }
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    let p = particles[i];
+                    p.speed *= p.friction; p.x += Math.cos(p.angle) * p.speed; p.y += Math.sin(p.angle) * p.speed + p.gravity; p.alpha -= p.decay;
+                    if (p.alpha <= p.decay) particles.splice(i, 1);
+                    else { ctx.save(); ctx.globalAlpha = p.alpha; ctx.beginPath(); ctx.fillStyle = p.color; ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+                }
+                fireworksAnimationId = requestAnimationFrame(update);
+            }
+            update();
+        }
+        function stopFireworks() { cancelAnimationFrame(fireworksAnimationId); }
+
+        // --- Initial Load ---
+        window.addEventListener('resize', () => {
+            document.querySelectorAll('canvas').forEach(canvas => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        });
+        animateClickParticles();
+        showScreen(1);
+    </script>
+</body>
+</html>
