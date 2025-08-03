@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎉 Crazy Friendship Day Adventure! 🎉</title>
+    <title>🎉 Crazy Friendship Day Adventure! </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tone.js for better sound effects -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
@@ -264,7 +264,7 @@
             <canvas id="fireworks-canvas"></canvas>
             <div class="message-card bg-transparent border-none shadow-none">
                 <h1 id="final-message" class="funky-font text-5xl md:text-6xl text-yellow-400 mb-6">HAPPY FRIENDSHIP DAY!</h1>
-                <p class="text-2xl text-white mb-8">You're not just a friend - you're the College FAMILY! 🥳</p>
+                <p class="text-2xl text-white mb-8">You're not just a friend - you're FAMILY! 🥳</p>
                 <div class="flex gap-4 justify-center flex-wrap">
                     <button id="replay-btn" class="funky-btn">🔄 Replay</button>
                 </div>
@@ -292,7 +292,7 @@
         // --- Content Arrays ---
         const hinglishJokes = [
             "Group study ka matlab: ek padh raha hai, dusra kha raha hai, teesra bas memes dikha raha hai! 😂",
-            "Day 1: Kal se padhunga. Day 2: Kal se padhunga. Day 3: Arey bhai paper kal hai??? 🤯",
+            "Day 1: Kal se padhunga. Day 2: Kal se padhunga. Day 3: Arey bhai paper kal hai??? �",
             "Tumhari ‘all-nighter’ ka matlab – memes dekhte dekhte subah kar dena! 🤣",
             "Are jaldi aao na yaar… TC pe aa jao!",
             "Bhai bunk kare kya? Teacher ka mood dekh ke lag raha hai – aaj padhai nahi hone wali!",
@@ -313,6 +313,7 @@
            "Group me message bhejo – 'Sabko ek emoji assign karo jo unke liye perfect ho!' 🤣",
            "Group me message bhejo – 'Sabke liye ek nickname likho jo sabko hassa de!' 🤣"
         ];
+        let availableJokes = [];
 
         // --- Sound Engine (Tone.js) ---
         const synths = {
@@ -379,22 +380,38 @@
         });
 
         // --- Games & Interactive Elements ---
+        function getUniqueJoke() {
+            if (availableJokes.length === 0) {
+                availableJokes = [...hinglishJokes]; // Refill the pool
+            }
+            const jokeIndex = Math.floor(Math.random() * availableJokes.length);
+            const joke = availableJokes[jokeIndex];
+            availableJokes.splice(jokeIndex, 1); // Remove the used joke
+            return joke;
+        }
+
         function setupJokeBoxes(screen) {
             const jokeBoxes = screen.querySelectorAll('.joke-box');
             if (!jokeBoxes.length) return;
-            const shuffledJokes = [...hinglishJokes].sort(() => 0.5 - Math.random());
-            jokeBoxes.forEach((box, index) => {
-                box.dataset.joke = shuffledJokes[index % shuffledJokes.length];
-                box.innerHTML = "Click here for some regular dialogues 🤫";
+            
+            jokeBoxes.forEach((box) => {
+                box.dataset.joke = getUniqueJoke();
+                box.innerHTML = "Click for a Joke! 🤫";
                 box.classList.remove('revealed');
                 box.dataset.revealed = 'false';
             });
         }
 
         const wheelModal = document.getElementById('wheel-modal');
+        let lastDare = "";
         document.getElementById('spin-wheel-button').addEventListener('click', () => {
             playSound('sparkle', 'G4');
-            document.getElementById('dare-text').textContent = dares[Math.floor(Math.random() * dares.length)];
+            let newDare;
+            do {
+                newDare = dares[Math.floor(Math.random() * dares.length)];
+            } while (newDare === lastDare && dares.length > 1);
+            lastDare = newDare;
+            document.getElementById('dare-text').textContent = newDare;
             wheelModal.classList.add('visible');
         });
         document.getElementById('close-modal-button').addEventListener('click', () => {
